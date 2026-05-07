@@ -8,12 +8,16 @@ import { supabase } from '@/lib/supabase'
 import { Gig } from '@/lib/hooks/useGigs'
 import Link from 'next/link'
 
+type GigWithClient = Gig & {
+  client: { wallet_address: string } | null
+}
+
 export default function GigDetailPage() {
   const { id } = useParams()
   const { address, isConnected } = useAccount()
   const router = useRouter()
 
-  const [gig, setGig] = useState<Gig | null>(null)
+  const [gig, setGig] = useState<GigWithClient | null>(null)
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState(false)
   const [applied, setApplied] = useState(false)
@@ -23,7 +27,7 @@ export default function GigDetailPage() {
     async function fetchGig() {
       const { data, error } = await supabase
         .from('jobs')
-        .select('*')
+        .select('*, client:users!jobs_client_id_fkey(wallet_address)')
         .eq('id', id)
         .single()
 
@@ -146,6 +150,18 @@ export default function GigDetailPage() {
           <p className="text-gray-500 text-xs">
             Posted: {new Date(gig.created_at).toLocaleDateString('en-US')}
           </p>
+
+          {gig.client?.wallet_address && (
+            <p className="text-gray-500 text-xs mt-1">
+              Client:{' '}
+              <Link
+                href={`/profile/${gig.client.wallet_address}`}
+                className="text-purple-400 hover:text-purple-300 font-mono transition-colors"
+              >
+                {`${gig.client.wallet_address.slice(0, 6)}...${gig.client.wallet_address.slice(-4)}`}
+              </Link>
+            </p>
+          )}
         </div>
 
         {/* 지원하기 */}

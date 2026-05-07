@@ -28,7 +28,7 @@ export default function Home() {
           <div className="text-center">
             <p className="text-green-400 text-lg font-semibold mb-2">✅ Wallet Connected</p>
             <p className="text-gray-400 text-sm mb-8">{address}</p>
-            <div className="flex gap-4">
+            <div className="flex gap-4 flex-wrap justify-center">
               <Link
                 href="/gigs"
                 className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg transition-all"
@@ -40,6 +40,12 @@ export default function Home() {
                 className="bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-lg transition-all"
               >
                 Post a Gig
+              </Link>
+              <Link
+                href={`/profile/${address}`}
+                className="bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-lg transition-all"
+              >
+                My Profile
               </Link>
             </div>
           </div>
