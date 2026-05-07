@@ -47,7 +47,7 @@ export default function GigDetailPage() {
         .eq('wallet_address', address)
         .single()
 
-      if (!user) throw new Error('유저를 찾을 수 없습니다')
+      if (!user) throw new Error('User not found')
 
       // 이미 지원했는지 확인
       const { data: existing } = await supabase
@@ -82,13 +82,13 @@ export default function GigDetailPage() {
 
   if (loading) return (
     <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
-      로딩 중...
+      Loading...
     </div>
   )
 
   if (!gig) return (
     <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
-      기그를 찾을 수 없습니다
+      Gig not found
     </div>
   )
 
@@ -106,7 +106,7 @@ export default function GigDetailPage() {
 
         {/* 뒤로가기 */}
         <Link href="/gigs" className="text-gray-400 hover:text-white text-sm mb-6 block">
-          ← 기그 목록으로
+          ← Back to Gigs
         </Link>
 
         {/* 기그 정보 */}
@@ -114,7 +114,7 @@ export default function GigDetailPage() {
           <div className="flex justify-between items-start mb-4">
             <h1 className="text-2xl font-bold">{gig.title}</h1>
             <span className="bg-green-900 text-green-400 text-xs px-2 py-1 rounded-full">
-              모집중
+              Open
             </span>
           </div>
 
@@ -134,36 +134,36 @@ export default function GigDetailPage() {
           {/* 예산 & 카테고리 */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="bg-gray-800 rounded-lg p-4">
-              <p className="text-gray-400 text-xs mb-1">예산</p>
+              <p className="text-gray-400 text-xs mb-1">Budget</p>
               <p className="text-purple-400 font-bold text-xl">{gig.budget} USDC</p>
             </div>
             <div className="bg-gray-800 rounded-lg p-4">
-              <p className="text-gray-400 text-xs mb-1">카테고리</p>
-              <p className="text-white font-semibold">{gig.category || '미분류'}</p>
+              <p className="text-gray-400 text-xs mb-1">Category</p>
+              <p className="text-white font-semibold">{gig.category || 'Uncategorized'}</p>
             </div>
           </div>
 
           <p className="text-gray-500 text-xs">
-            등록일: {new Date(gig.created_at).toLocaleDateString('ko-KR')}
+            Posted: {new Date(gig.created_at).toLocaleDateString('en-US')}
           </p>
         </div>
 
         {/* 지원하기 */}
         {!isConnected ? (
           <div className="text-center py-6">
-            <p className="text-gray-400 mb-4">지원하려면 지갑을 연결해주세요</p>
+            <p className="text-gray-400 mb-4">Please connect your wallet to apply</p>
             <ConnectButton />
           </div>
         ) : applied ? (
           <div className="bg-green-900/30 border border-green-700 rounded-xl p-6 text-center">
-            <p className="text-green-400 font-semibold text-lg">✅ 지원 완료!</p>
-            <p className="text-gray-400 text-sm mt-2">클라이언트의 수락을 기다려주세요</p>
+            <p className="text-green-400 font-semibold text-lg">✅ Application Submitted!</p>
+            <p className="text-gray-400 text-sm mt-2">Waiting for the client to accept</p>
           </div>
         ) : (
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-            <h3 className="text-lg font-semibold mb-4">이 기그에 지원하기</h3>
+            <h3 className="text-lg font-semibold mb-4">Apply for this Gig</h3>
             <p className="text-gray-400 text-sm mb-6">
-              지원하면 클라이언트에게 알림이 가고, 수락 시 계약이 시작됩니다.
+              Applying notifies the client, and a contract starts upon acceptance.
             </p>
 
             {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
@@ -173,7 +173,7 @@ export default function GigDetailPage() {
               disabled={applying}
               className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-all"
             >
-              {applying ? '지원 중...' : '지원하기'}
+              {applying ? 'Applying...' : 'Apply'}
             </button>
           </div>
         )}

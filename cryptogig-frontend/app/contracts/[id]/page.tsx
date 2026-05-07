@@ -78,7 +78,7 @@ export default function ContractDetailPage() {
     setError(null)
 
     try {
-      setTxStatus('컨트랙트 배포 중...')
+      setTxStatus('Deploying contract...')
       const deployHash = await deployEscrow({
         clientAddress: contract.client.wallet_address,
         freelancerAddress: contract.freelancer.wallet_address,
@@ -87,7 +87,7 @@ export default function ContractDetailPage() {
       
       console.log('deployHash:', deployHash)
 
-      setTxStatus('배포 확인 중...')
+      setTxStatus('Confirming deployment...')
       const deployReceipt = await publicClient!.waitForTransactionReceipt({
         hash: deployHash as `0x${string}`
       })
@@ -96,7 +96,7 @@ export default function ContractDetailPage() {
       console.log('contractAddress:', deployReceipt.contractAddress)
 
       const contractAddress = deployReceipt.contractAddress
-      if (!contractAddress) throw new Error('컨트랙트 주소를 찾을 수 없습니다')
+      if (!contractAddress) throw new Error('Contract address not found')
 
       const { error: updateError } = await supabase
         .from('contracts')
@@ -105,14 +105,14 @@ export default function ContractDetailPage() {
       
       console.log('updateError:', updateError)
 
-      setTxStatus('USDC 승인 중...')
+      setTxStatus('Approving USDC...')
       const approveHash = await approveUSDC({
         spenderAddress: contractAddress,
         amountUSDC: contract.amount,
       })
       await publicClient!.waitForTransactionReceipt({ hash: approveHash as `0x${string}` })
 
-      setTxStatus('완료!')
+      setTxStatus('Done!')
       await supabase
         .from('contracts')
         .update({ status: 'LOCKED', tx_hash: deployHash })
@@ -133,7 +133,7 @@ export default function ContractDetailPage() {
     setProcessing(true)
     setError(null)
     try {
-      setTxStatus('온체인 완료 신호 전송 중...')
+      setTxStatus('Sending completion signal onchain...')
       const hash = await completeEscrow()
       await publicClient!.waitForTransactionReceipt({ hash: hash as `0x${string}` })
       await supabase.from('contracts').update({ status: 'COMPLETED' }).eq('id', id)
@@ -151,7 +151,7 @@ export default function ContractDetailPage() {
     setProcessing(true)
     setError(null)
     try {
-      setTxStatus('온체인 승인 & 지급 중...')
+      setTxStatus('Approving & releasing onchain...')
       const hash = await releaseEscrow()
       await publicClient!.waitForTransactionReceipt({ hash: hash as `0x${string}` })
       await supabase.from('contracts').update({ status: 'RELEASED' }).eq('id', id)
@@ -180,13 +180,13 @@ export default function ContractDetailPage() {
 
   if (loading) return (
     <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
-      로딩 중...
+      Loading...
     </div>
   )
 
   if (!contract) return (
     <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
-      계약을 찾을 수 없습니다
+      Contract not found
     </div>
   )
 
@@ -199,7 +199,7 @@ export default function ContractDetailPage() {
 
       <div className="max-w-3xl mx-auto px-6 py-10">
         <Link href="/contracts" className="text-gray-400 hover:text-white text-sm mb-6 block">
-          &larr; 계약 목록으로
+          &larr; Back to Contracts
         </Link>
 
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
@@ -212,33 +212,33 @@ export default function ContractDetailPage() {
 
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="bg-gray-800 rounded-lg p-4">
-              <p className="text-gray-400 text-xs mb-1">계약 금액</p>
+              <p className="text-gray-400 text-xs mb-1">Contract Amount</p>
               <p className="text-purple-400 font-bold text-xl">{contract.amount} USDC</p>
             </div>
             <div className="bg-gray-800 rounded-lg p-4">
-              <p className="text-gray-400 text-xs mb-1">내 역할</p>
+              <p className="text-gray-400 text-xs mb-1">My Role</p>
               <p className="text-white font-semibold">
-                {myRole === 'client' ? '클라이언트' : '프리랜서'}
+                {myRole === 'client' ? 'Client' : 'Freelancer'}
               </p>
             </div>
           </div>
 
           <div className="flex flex-col gap-2 text-sm mb-4">
             <div className="flex justify-between">
-              <span className="text-gray-400">클라이언트</span>
+              <span className="text-gray-400">Client</span>
               <span className="text-white font-mono text-xs">
                 {contract.client?.wallet_address?.slice(0, 6)}...{contract.client?.wallet_address?.slice(-4)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">프리랜서</span>
+              <span className="text-gray-400">Freelancer</span>
               <span className="text-white font-mono text-xs">
                 {contract.freelancer?.wallet_address?.slice(0, 6)}...{contract.freelancer?.wallet_address?.slice(-4)}
               </span>
             </div>
             {contract.contract_address && (
               <div className="flex justify-between">
-                <span className="text-gray-400">Escrow 주소</span>
+                <span className="text-gray-400">Escrow Address</span>
                 <span className="text-purple-400 font-mono text-xs">
                   {contract.contract_address.slice(0, 6)}...{contract.contract_address.slice(-4)}
                 </span>
@@ -248,7 +248,7 @@ export default function ContractDetailPage() {
         </div>
 
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
-          <h3 className="text-lg font-semibold mb-4">진행 상태</h3>
+          <h3 className="text-lg font-semibold mb-4">Progress</h3>
           <div className="flex justify-between items-center">
             {['LOCKED', 'COMPLETED', 'RELEASED'].map((step, i) => (
               <div key={step} className="flex items-center">
@@ -261,7 +261,7 @@ export default function ContractDetailPage() {
                   {i + 1}
                 </div>
                 <span className="text-xs text-gray-400 ml-2">
-                  {step === 'LOCKED' ? '진행중' : step === 'COMPLETED' ? '완료대기' : '지급완료'}
+                  {step === 'LOCKED' ? 'In Progress' : step === 'COMPLETED' ? 'Pending Release' : 'Paid'}
                 </span>
                 {i < 2 && <div className="w-16 h-px bg-gray-700 mx-3" />}
               </div>
@@ -284,7 +284,7 @@ export default function ContractDetailPage() {
               disabled={processing}
               className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 text-white font-semibold py-3 rounded-lg transition-all"
             >
-              {processing ? txStatus || '처리 중...' : 'Escrow 시작 (USDC 잠금)'}
+              {processing ? txStatus || 'Processing...' : 'Start Escrow (Lock USDC)'}
             </button>
           )}
 
@@ -294,7 +294,7 @@ export default function ContractDetailPage() {
               disabled={processing}
               className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 text-white font-semibold py-3 rounded-lg transition-all"
             >
-              {processing ? txStatus || '처리 중...' : '작업 완료'}
+              {processing ? txStatus || 'Processing...' : 'Mark Complete'}
             </button>
           )}
 
@@ -304,7 +304,7 @@ export default function ContractDetailPage() {
               disabled={processing}
               className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-700 text-white font-semibold py-3 rounded-lg transition-all"
             >
-              {processing ? txStatus || '처리 중...' : '승인 & 지급'}
+              {processing ? txStatus || 'Processing...' : 'Approve & Release'}
             </button>
           )}
 
@@ -314,21 +314,21 @@ export default function ContractDetailPage() {
               disabled={processing}
               className="w-full bg-red-900 hover:bg-red-800 disabled:bg-gray-700 text-red-400 font-semibold py-3 rounded-lg transition-all"
             >
-              {processing ? '처리 중...' : '분쟁 신청'}
+              {processing ? 'Processing...' : 'Raise Dispute'}
             </button>
           )}
 
           {contract.status === 'RELEASED' && (
             <div className="bg-green-900/30 border border-green-700 rounded-xl p-6 text-center">
-              <p className="text-green-400 font-semibold text-lg">계약 완료!</p>
-              <p className="text-gray-400 text-sm mt-2">{contract.amount} USDC가 프리랜서에게 지급됐습니다</p>
+              <p className="text-green-400 font-semibold text-lg">Contract Complete!</p>
+              <p className="text-gray-400 text-sm mt-2">{contract.amount} USDC has been released to the freelancer</p>
             </div>
           )}
 
           {contract.status === 'DISPUTED' && (
             <div className="bg-red-900/30 border border-red-700 rounded-xl p-6 text-center">
-              <p className="text-red-400 font-semibold text-lg">분쟁 진행 중</p>
-              <p className="text-gray-400 text-sm mt-2">관리자가 검토 중입니다</p>
+              <p className="text-red-400 font-semibold text-lg">Dispute In Progress</p>
+              <p className="text-gray-400 text-sm mt-2">Under admin review</p>
             </div>
           )}
         </div>

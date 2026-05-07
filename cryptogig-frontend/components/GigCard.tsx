@@ -10,7 +10,7 @@ export function GigCard({ gig }: { gig: Gig }) {
         <div className="flex justify-between items-start mb-3">
           <h3 className="text-white font-semibold text-lg">{gig.title}</h3>
           <span className="bg-green-900 text-green-400 text-xs px-2 py-1 rounded-full">
-            모집중
+            Open
           </span>
         </div>
 
@@ -39,7 +39,7 @@ export function GigCard({ gig }: { gig: Gig }) {
             {gig.budget} {gig.currency}
           </span>
           <span className="text-gray-500 text-xs">
-            {new Date(gig.created_at).toLocaleDateString('ko-KR')}
+            {new Date(gig.created_at).toLocaleDateString('en-US')}
           </span>
         </div>
       </div>

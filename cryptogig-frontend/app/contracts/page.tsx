@@ -57,7 +57,7 @@ export default function ContractsPage() {
 
   if (!isConnected) return (
     <main className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center gap-4">
-      <p className="text-gray-400">계약을 보려면 지갑을 연결해주세요</p>
+      <p className="text-gray-400">Please connect your wallet to view contracts</p>
       <ConnectButton />
     </main>
   )
@@ -67,20 +67,20 @@ export default function ContractsPage() {
       <header className="border-b border-gray-800 px-6 py-4 flex justify-between items-center">
         <Link href="/" className="text-xl font-bold text-purple-400">CryptoGig</Link>
         <div className="flex gap-4 items-center">
-          <Link href="/gigs" className="text-gray-400 hover:text-white text-sm">기그 목록</Link>
-          <Link href="/dashboard" className="text-gray-400 hover:text-white text-sm">대시보드</Link>
+          <Link href="/gigs" className="text-gray-400 hover:text-white text-sm">Browse Gigs</Link>
+          <Link href="/dashboard" className="text-gray-400 hover:text-white text-sm">Dashboard</Link>
           <ConnectButton />
         </div>
       </header>
 
       <div className="max-w-4xl mx-auto px-6 py-10">
-        <h2 className="text-2xl font-bold mb-8">내 계약</h2>
+        <h2 className="text-2xl font-bold mb-8">My Contracts</h2>
 
-        {loading && <p className="text-gray-400">로딩 중...</p>}
+        {loading && <p className="text-gray-400">Loading...</p>}
 
         {!loading && contracts.length === 0 && (
           <div className="text-center py-20">
-            <p className="text-gray-400">진행 중인 계약이 없어요</p>
+            <p className="text-gray-400">No active contracts</p>
           </div>
         )}
 
@@ -96,7 +96,7 @@ export default function ContractsPage() {
                 </div>
                 <p className="text-purple-400 font-bold">{contract.amount} USDC</p>
                 <p className="text-gray-500 text-xs mt-2">
-                  {new Date(contract.created_at).toLocaleDateString('ko-KR')}
+                  {new Date(contract.created_at).toLocaleDateString('en-US')}
                 </p>
               </div>
             </Link>
