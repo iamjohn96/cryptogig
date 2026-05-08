@@ -6,6 +6,7 @@ import { useAccount } from 'wagmi'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { supabase } from '@/lib/supabase'
 import { Gig } from '@/lib/hooks/useGigs'
+import { getOrCreateChannel } from '@/lib/hooks/useMessages'
 import Link from 'next/link'
 
 type GigWithClient = Gig & {
@@ -39,7 +40,7 @@ export default function GigDetailPage() {
   }, [id])
 
   async function handleApply() {
-    if (!address) return
+    if (!address || !gig) return
     setApplying(true)
     setError(null)
 
@@ -67,7 +68,7 @@ export default function GigDetailPage() {
       }
 
       // 지원 등록
-      const { error } = await supabase
+      const { error: applyError } = await supabase
         .from('applications')
         .insert({
           job_id: id,
@@ -75,7 +76,22 @@ export default function GigDetailPage() {
           status: 'PENDING'
         })
 
-      if (error) throw error
+      if (applyError) throw applyError
+
+      // 채널 자동 생성 후 메시지로 이동
+      const clientAddress = gig.client?.wallet_address
+      if (clientAddress) {
+        const channelId = await getOrCreateChannel(
+          id as string,
+          clientAddress,
+          address
+        )
+        if (channelId) {
+          router.push(`/messages/${channelId}`)
+          return
+        }
+      }
+
       setApplied(true)
     } catch (err: any) {
       setError(err.message)

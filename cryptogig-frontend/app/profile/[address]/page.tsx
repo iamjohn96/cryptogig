@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useAccount } from 'wagmi'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { supabase } from '@/lib/supabase'
+import { getOrCreateChannel } from '@/lib/hooks/useMessages'
 import Link from 'next/link'
 
 type UserProfile = {
@@ -42,6 +43,7 @@ function AvatarCircle({ name, address }: { name: string | null; address: string 
 export default function ProfilePage() {
   const { address: paramAddress } = useParams<{ address: string }>()
   const { address: connectedAddress } = useAccount()
+  const router = useRouter()
 
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [completedGigs, setCompletedGigs] = useState<CompletedGig[]>([])
@@ -52,6 +54,7 @@ export default function ProfilePage() {
   })
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [messaging, setMessaging] = useState(false)
 
   const [editMode, setEditMode] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -80,7 +83,6 @@ export default function ProfilePage() {
       .single()
 
     if (error || !user) {
-      // Auto-create a minimal profile so the page is always viewable
       const { data: newUser, error: createError } = await supabase
         .from('users')
         .insert({ wallet_address: paramAddress })
@@ -100,7 +102,6 @@ export default function ProfilePage() {
 
     setProfile(user as UserProfile)
 
-    // Fetch contracts stats
     const { data: contracts } = await supabase
       .from('contracts')
       .select('id, amount, status, created_at, job_id, jobs(title)')
@@ -130,6 +131,24 @@ export default function ProfilePage() {
     }
 
     setLoading(false)
+  }
+
+  async function handleMessage() {
+    if (!connectedAddress) {
+      alert('Connect your wallet first')
+      return
+    }
+    setMessaging(true)
+    // DM 채널: gig_id 없이 생성 (클라이언트=나, 프리랜서=프로필 주인)
+    const channelId = await getOrCreateChannel(
+      null,
+      connectedAddress,
+      paramAddress
+    )
+    if (channelId) {
+      router.push(`/messages/${channelId}`)
+    }
+    setMessaging(false)
   }
 
   function enterEditMode() {
@@ -176,7 +195,6 @@ export default function ProfilePage() {
       .eq('id', profile.id)
 
     if (error) {
-      // hourly_rate column may not exist yet — retry without it
       if (error.message?.includes('hourly_rate')) {
         const { name, bio, skills } = updates
         const { error: retryError } = await supabase
@@ -276,14 +294,28 @@ export default function ProfilePage() {
               </p>
               <p className="text-gray-500 text-xs">Member since {memberSince}</p>
             </div>
-            {isOwner && !editMode && (
-              <button
-                onClick={enterEditMode}
-                className="bg-gray-800 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded-lg transition-all flex-shrink-0"
-              >
-                Edit Profile
-              </button>
-            )}
+
+            {/* 버튼 영역 */}
+            <div className="flex gap-2 flex-shrink-0">
+              {/* Message 버튼: 본인 프로필이 아닐 때만 표시 */}
+              {!isOwner && (
+                <button
+                  onClick={handleMessage}
+                  disabled={messaging}
+                  className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm px-4 py-2 rounded-lg transition-all"
+                >
+                  {messaging ? '...' : '💬 Message'}
+                </button>
+              )}
+              {isOwner && !editMode && (
+                <button
+                  onClick={enterEditMode}
+                  className="bg-gray-800 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded-lg transition-all"
+                >
+                  Edit Profile
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
