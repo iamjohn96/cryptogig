@@ -85,7 +85,7 @@ export default function DashboardPage() {
           client_id: clientUser.id,
           freelancer_id: app.freelancer_id,
           amount: app.job?.budget ?? 0,
-          status: 'PENDING',
+          status: 'LOCKED',
         })
         .select('id')
         .single()
