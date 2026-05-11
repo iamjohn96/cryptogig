@@ -18,6 +18,9 @@ export const polygonAmoy = defineChain({
     default: { name: 'PolygonScan', url: 'https://amoy.polygonscan.com' },
   },
   testnet: true,
+  fees: {
+    defaultPriorityFee: BigInt(30_000_000_000), // 30 Gwei
+  },
 })
 
 export const config = getDefaultConfig({
