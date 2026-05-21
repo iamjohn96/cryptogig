@@ -1,8 +1,10 @@
 import { useWriteContract, useReadContract, useDeployContract } from 'wagmi'
-import { parseUnits } from 'viem'
+import { parseUnits, parseGwei } from 'viem'
 import { ESCROW_ABI } from '@/lib/escrowABI'
 import { ESCROW_BYTECODE } from '@/lib/escrowBytecode'
 import { USDC_ADDRESS, PLATFORM_ADDRESS, PLATFORM_FEE_PCT } from '@/lib/constants'
+
+const MIN_PRIORITY_FEE = parseGwei('30') // Polygon Amoy minimum
 
 const ERC20_ABI = [
   {
@@ -43,6 +45,7 @@ export function useDeployEscrow() {
         amount,
         PLATFORM_FEE_PCT,
       ],
+      maxPriorityFeePerGas: MIN_PRIORITY_FEE,
     })
 
     return hash
@@ -69,6 +72,7 @@ export function useApproveUSDC() {
       abi: ERC20_ABI,
       functionName: 'approve',
       args: [spenderAddress as `0x${string}`, amount],
+      maxPriorityFeePerGas: MIN_PRIORITY_FEE,
     })
 
     return hash
@@ -77,15 +81,16 @@ export function useApproveUSDC() {
   return { approveUSDC, isPending }
 }
 
-// Escrow lock
-export function useLockEscrow(contractAddress: string) {
+// Escrow lock — contractAddress is passed at call time so it works with a freshly-deployed address
+export function useLockEscrow() {
   const { writeContractAsync, isPending } = useWriteContract()
 
-  async function lockEscrow() {
+  async function lockEscrow(contractAddress: string) {
     const hash = await writeContractAsync({
       address: contractAddress as `0x${string}`,
       abi: ESCROW_ABI,
       functionName: 'lock',
+      maxPriorityFeePerGas: MIN_PRIORITY_FEE,
     })
     return hash
   }
@@ -102,6 +107,7 @@ export function useCompleteEscrow(contractAddress: string) {
       address: contractAddress as `0x${string}`,
       abi: ESCROW_ABI,
       functionName: 'complete',
+      maxPriorityFeePerGas: MIN_PRIORITY_FEE,
     })
     return hash
   }
@@ -118,6 +124,7 @@ export function useReleaseEscrow(contractAddress: string) {
       address: contractAddress as `0x${string}`,
       abi: ESCROW_ABI,
       functionName: 'release',
+      maxPriorityFeePerGas: MIN_PRIORITY_FEE,
     })
     return hash
   }

@@ -9,6 +9,7 @@ import Link from 'next/link'
 import {
   useDeployEscrow,
   useApproveUSDC,
+  useLockEscrow,
   useCompleteEscrow,
   useReleaseEscrow,
 } from '@/lib/hooks/useEscrow'
@@ -41,6 +42,7 @@ export default function ContractDetailPage() {
 
   const { deployEscrow } = useDeployEscrow()
   const { approveUSDC } = useApproveUSDC()
+  const { lockEscrow } = useLockEscrow()
   const { completeEscrow } = useCompleteEscrow(contract?.contract_address || '')
   const { releaseEscrow } = useReleaseEscrow(contract?.contract_address || '')
 
@@ -78,33 +80,31 @@ export default function ContractDetailPage() {
     setError(null)
 
     try {
-      setTxStatus('Deploying contract...')
+      // Step 1: Deploy the escrow contract
+      setTxStatus('Deploying escrow contract...')
       const deployHash = await deployEscrow({
         clientAddress: contract.client.wallet_address,
         freelancerAddress: contract.freelancer.wallet_address,
         amountUSDC: contract.amount,
       })
-      
-      console.log('deployHash:', deployHash)
 
       setTxStatus('Confirming deployment...')
       const deployReceipt = await publicClient!.waitForTransactionReceipt({
         hash: deployHash as `0x${string}`
       })
-      
-      console.log('deployReceipt:', deployReceipt)
-      console.log('contractAddress:', deployReceipt.contractAddress)
 
       const contractAddress = deployReceipt.contractAddress
-      if (!contractAddress) throw new Error('Contract address not found')
+      if (!contractAddress) throw new Error('Contract address not found in receipt')
 
-      const { error: updateError } = await supabase
+      // Step 2: Persist contract address immediately so re-clicking the button
+      // cannot trigger a second deploy if a later step fails
+      await supabase
         .from('contracts')
         .update({ contract_address: contractAddress })
         .eq('id', id)
-      
-      console.log('updateError:', updateError)
+      setContract(prev => prev ? { ...prev, contract_address: contractAddress } : prev)
 
+      // Step 3: Approve USDC spending allowance for the escrow contract
       setTxStatus('Approving USDC...')
       const approveHash = await approveUSDC({
         spenderAddress: contractAddress,
@@ -112,15 +112,20 @@ export default function ContractDetailPage() {
       })
       await publicClient!.waitForTransactionReceipt({ hash: approveHash as `0x${string}` })
 
-      setTxStatus('Done!')
+      // Step 4: Lock USDC into the escrow contract
+      setTxStatus('Locking USDC into escrow...')
+      const lockHash = await lockEscrow(contractAddress)
+      await publicClient!.waitForTransactionReceipt({ hash: lockHash as `0x${string}` })
+
       await supabase
         .from('contracts')
-        .update({ status: 'LOCKED', tx_hash: deployHash })
+        .update({ tx_hash: lockHash })
         .eq('id', id)
 
+      setTxStatus('Escrow locked!')
       await fetchContract()
     } catch (err: any) {
-      console.error('에러:', err)
+      console.error('Escrow setup error:', err)
       setError(err.message)
     } finally {
       setProcessing(false)
